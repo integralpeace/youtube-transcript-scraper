@@ -1,4 +1,4 @@
-import { Innertube } from 'youtubei.js';
+import { YoutubeTranscript } from 'youtube-transcript';
 
 function extractVideoId(url) {
   const patterns = [
@@ -19,18 +19,27 @@ function formatTimestamp(ms) {
   return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 }
 
-function formatToMarkdown(transcript, videoUrl, videoId, title) {
-  let md = `# ${title || 'YouTube Video Transcript'}\n\n`;
+function formatToMarkdown(transcript, videoUrl, videoId) {
+  let md = `# YouTube Video Transcript\n\n`;
   md += `**Video URL:** ${videoUrl}\n\n`;
   md += `**Video ID:** ${videoId}\n\n`;
   md += `---\n\n## Transcript\n\n`;
   transcript.forEach(item => {
-    md += `**[${formatTimestamp(item.start_ms)}]** ${item.text}\n\n`;
+    md += `**[${formatTimestamp(item.offset)}]** ${item.text}\n\n`;
   });
   return md;
 }
 
 export default async function handler(req, res) {
+  // Set CORS headers
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -47,31 +56,29 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Invalid YouTube URL' });
     }
 
-    const youtube = await Innertube.create();
-    const info = await youtube.getInfo(videoId);
-    const transcriptInfo = await info.getTranscript();
+    let transcript;
+    try {
+      transcript = await YoutubeTranscript.fetchTranscript(videoId);
+    } catch (e) {
+      // Try with language options
+      try {
+        transcript = await YoutubeTranscript.fetchTranscript(videoId, { lang: 'en' });
+      } catch (e2) {
+        return res.status(404).json({
+          error: 'No transcript available for this video. The video may not have captions enabled.'
+        });
+      }
+    }
 
-    if (!transcriptInfo?.transcript?.content?.body?.initial_segments) {
+    if (!transcript || transcript.length === 0) {
       return res.status(404).json({ error: 'No transcript available for this video' });
     }
 
-    const segments = transcriptInfo.transcript.content.body.initial_segments;
-    const transcript = segments.map(seg => ({
-      text: seg.snippet?.text || '',
-      start_ms: parseInt(seg.start_ms) || 0
-    })).filter(t => t.text);
-
-    if (transcript.length === 0) {
-      return res.status(404).json({ error: 'No transcript available for this video' });
-    }
-
-    const title = info.basic_info?.title || 'YouTube Video';
-    const markdown = formatToMarkdown(transcript, url, videoId, title);
+    const markdown = formatToMarkdown(transcript, url, videoId);
 
     return res.status(200).json({
       success: true,
       videoId,
-      title,
       markdown,
       filename: `transcript-${videoId}.md`
     });
