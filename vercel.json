@@ -1,7 +1,7 @@
 {
-  "buildCommand": "",
-  "outputDirectory": ".",
-  "rewrites": [
-    { "source": "/api/transcript", "destination": "/api/transcript" }
-  ]
+  "functions": {
+    "api/transcript.py": {
+      "runtime": "@vercel/python"
+    }
+  }
 }
