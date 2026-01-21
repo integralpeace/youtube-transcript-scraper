@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YouTube Transcript Scraper</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      min-height: 100vh;
+      padding: 40px 20px;
+      color: #fff;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 10px;
+      font-size: 2.5rem;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #888;
+      margin-bottom: 40px;
+    }
+
+    .input-section {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 30px;
+      margin-bottom: 30px;
+    }
+
+    .url-input {
+      width: 100%;
+      padding: 15px 20px;
+      font-size: 16px;
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      background: rgba(0, 0, 0, 0.3);
+      color: #fff;
+      margin-bottom: 15px;
+      transition: border-color 0.3s;
+    }
+
+    .url-input:focus {
+      outline: none;
+      border-color: #e94560;
+    }
+
+    .url-input::placeholder {
+      color: #666;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 15px 30px;
+      font-size: 16px;
+      font-weight: 600;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #e94560 0%, #0f3460 100%);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(233, 69, 96, 0.3);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-download {
+      background: #28a745;
+      color: #fff;
+      margin-top: 15px;
+    }
+
+    .btn-download:hover {
+      background: #218838;
+    }
+
+    .status {
+      text-align: center;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      display: none;
+    }
+
+    .status.error {
+      background: rgba(220, 53, 69, 0.2);
+      border: 1px solid #dc3545;
+      color: #ff6b6b;
+      display: block;
+    }
+
+    .status.success {
+      background: rgba(40, 167, 69, 0.2);
+      border: 1px solid #28a745;
+      color: #6bff6b;
+      display: block;
+    }
+
+    .status.loading {
+      background: rgba(255, 193, 7, 0.2);
+      border: 1px solid #ffc107;
+      color: #ffc107;
+      display: block;
+    }
+
+    .preview {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 30px;
+      display: none;
+    }
+
+    .preview.show {
+      display: block;
+    }
+
+    .preview h3 {
+      margin-bottom: 15px;
+      color: #e94560;
+    }
+
+    .preview-content {
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 8px;
+      padding: 20px;
+      max-height: 400px;
+      overflow-y: auto;
+      font-family: 'Monaco', 'Menlo', monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      color: #ccc;
+    }
+
+    .history {
+      margin-top: 40px;
+    }
+
+    .history h3 {
+      margin-bottom: 15px;
+      color: #888;
+    }
+
+    .history-list {
+      list-style: none;
+    }
+
+    .history-item {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 15px 20px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .history-item span {
+      color: #888;
+      font-size: 14px;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: #fff;
+      animation: spin 1s ease-in-out infinite;
+      margin-right: 10px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>YouTube Transcript Scraper</h1>
+    <p class="subtitle">Download video transcripts in Markdown format</p>
+
+    <div class="input-section">
+      <input
+        type="text"
+        id="urlInput"
+        class="url-input"
+        placeholder="Paste YouTube URL here (e.g., https://youtube.com/watch?v=...)"
+      >
+      <button id="fetchBtn" class="btn btn-primary" onclick="fetchTranscript()">
+        Get Transcript
+      </button>
+    </div>
+
+    <div id="status" class="status"></div>
+
+    <div id="preview" class="preview">
+      <h3>Preview</h3>
+      <div id="previewContent" class="preview-content"></div>
+      <button id="downloadBtn" class="btn btn-download" onclick="downloadTranscript()">
+        Download Markdown File
+      </button>
+    </div>
+
+    <div id="history" class="history" style="display: none;">
+      <h3>Recent Downloads</h3>
+      <ul id="historyList" class="history-list"></ul>
+    </div>
+  </div>
+
+  <script>
+    let currentTranscript = null;
+
+    async function fetchTranscript() {
+      const urlInput = document.getElementById('urlInput');
+      const fetchBtn = document.getElementById('fetchBtn');
+      const status = document.getElementById('status');
+      const preview = document.getElementById('preview');
+      const previewContent = document.getElementById('previewContent');
+
+      const url = urlInput.value.trim();
+
+      if (!url) {
+        showStatus('Please enter a YouTube URL', 'error');
+        return;
+      }
+
+      fetchBtn.disabled = true;
+      fetchBtn.innerHTML = '<span class="spinner"></span>Fetching...';
+      showStatus('Fetching transcript...', 'loading');
+      preview.classList.remove('show');
+
+      try {
+        const response = await fetch('/api/transcript', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to fetch transcript');
+        }
+
+        currentTranscript = data;
+        previewContent.textContent = data.markdown;
+        preview.classList.add('show');
+        showStatus('Transcript fetched successfully!', 'success');
+        addToHistory(url, data.videoId);
+
+      } catch (error) {
+        showStatus(error.message, 'error');
+      } finally {
+        fetchBtn.disabled = false;
+        fetchBtn.innerHTML = 'Get Transcript';
+      }
+    }
+
+    function downloadTranscript() {
+      if (!currentTranscript) return;
+
+      const blob = new Blob([currentTranscript.markdown], { type: 'text/markdown' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = currentTranscript.filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function showStatus(message, type) {
+      const status = document.getElementById('status');
+      status.textContent = message;
+      status.className = 'status ' + type;
+    }
+
+    function addToHistory(url, videoId) {
+      const history = JSON.parse(localStorage.getItem('transcriptHistory') || '[]');
+      const entry = { url, videoId, date: new Date().toLocaleString() };
+      history.unshift(entry);
+      if (history.length > 5) history.pop();
+      localStorage.setItem('transcriptHistory', JSON.stringify(history));
+      renderHistory();
+    }
+
+    function renderHistory() {
+      const history = JSON.parse(localStorage.getItem('transcriptHistory') || '[]');
+      const historySection = document.getElementById('history');
+      const historyList = document.getElementById('historyList');
+
+      if (history.length === 0) {
+        historySection.style.display = 'none';
+        return;
+      }
+
+      historySection.style.display = 'block';
+      historyList.innerHTML = history.map(item => `
+        <li class="history-item">
+          <span>${item.videoId}</span>
+          <span>${item.date}</span>
+        </li>
+      `).join('');
+    }
+
+    // Allow Enter key to submit
+    document.getElementById('urlInput').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') fetchTranscript();
+    });
+
+    // Load history on page load
+    renderHistory();
+  </script>
+</body>
+</html>
