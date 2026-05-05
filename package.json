@@ -10,10 +10,7 @@
     "build:dmg": "electron-builder --mac dmg"
   },
   "dependencies": {
-    "@distube/ytdl-core": "^4.16.12",
-    "@nadimtuhin/ytranscript": "^1.2.5",
-    "express": "^4.21.2",
-    "youtube-transcript": "^1.2.1"
+    "express": "^4.21.2"
   },
   "devDependencies": {
     "electron": "^33.4.11",

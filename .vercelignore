@@ -1,8 +1,0 @@
-node_modules
-dist
-*.app
-.DS_Store
-*.log
-SCOPE.md
-main.js
-server.mjs
