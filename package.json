@@ -6,7 +6,7 @@
   "scripts": {
     "start": "unset ELECTRON_RUN_AS_NODE && electron .",
     "server": "node --experimental-modules server.mjs",
-    "build": "electron-builder --mac",
+    "build:mac": "electron-builder --mac",
     "build:dmg": "electron-builder --mac dmg"
   },
   "dependencies": {
