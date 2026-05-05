@@ -1,12 +1,53 @@
 {
   "name": "youtube-transcript-scraper",
   "version": "1.0.0",
-  "description": "Web-based YouTube transcript scraper",
-  "type": "module",
+  "description": "YouTube transcript, video & audio downloader for macOS",
+  "main": "main.js",
   "scripts": {
-    "start": "python3 server.py"
+    "start": "unset ELECTRON_RUN_AS_NODE && electron .",
+    "server": "node --experimental-modules server.mjs",
+    "build": "electron-builder --mac",
+    "build:dmg": "electron-builder --mac dmg"
   },
   "dependencies": {
+    "@distube/ytdl-core": "^4.16.12",
+    "@nadimtuhin/ytranscript": "^1.2.5",
+    "express": "^4.21.2",
     "youtube-transcript": "^1.2.1"
+  },
+  "devDependencies": {
+    "electron": "^33.4.11",
+    "electron-builder": "^26.7.0"
+  },
+  "author": "batman",
+  "build": {
+    "appId": "com.local.youtube-transcript-scraper",
+    "productName": "YouTube Transcript Scraper",
+    "mac": {
+      "category": "public.app-category.utilities",
+      "target": "dmg",
+      "identity": null
+    },
+    "dmg": {
+      "title": "YouTube Transcript Scraper",
+      "contents": [
+        {
+          "x": 130,
+          "y": 220
+        },
+        {
+          "x": 410,
+          "y": 220,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ]
+    },
+    "files": [
+      "main.js",
+      "server.mjs",
+      "public/**/*",
+      "node_modules/**/*"
+    ]
   }
 }
